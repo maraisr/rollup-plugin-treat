@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`it should snapshot match basic-no-theme: assets/asset-7d28192b 1`] = `
+".test {
+    color: red
+}"
+`;
+
+exports[`it should snapshot match basic-no-theme: main 1`] = `
+"'use strict';
+
+var treat = require('treat');
+
+const myClass = \\"main-style_Cgpzz\\";
+var main_treat = {
+	myClass: myClass
+};
+
+var styleRefs = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	myClass: myClass,
+	'default': main_treat
+});
+
+console.log(
+	treat.resolveStyles(null, styleRefs),
+);
+"
+`;
+
+exports[`it should snapshot match basic-with-theme: assets/asset-7d28192b 1`] = `
+".test {
+    color: red
+}"
+`;
+
+exports[`it should snapshot match basic-with-theme: main 1`] = `
+"'use strict';
+
+var treat = require('treat');
+
+const myClass = \\"$main-style_uD4-m\\";
+var main_treat = {
+	myClass: myClass
+};
+
+var styleRefs = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	myClass: myClass,
+	'default': main_treat
+});
+
+const myTheme = \\"_theme-theme_H6C7\\";
+
+console.log(
+	treat.resolveStyles(myTheme, styleRefs),
+);
+"
+`;

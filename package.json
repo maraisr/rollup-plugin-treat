@@ -1,0 +1,73 @@
+{
+  "name": "rollup-plugin-treat",
+  "version": "0.0.1",
+  "description": "TODO",
+  "keywords": [
+    "TODO"
+  ],
+  "repository": "github:maraisr/rollup-plugin-treat",
+  "license": "MIT",
+  "author": "Marais Rossouw <me@maraisr.com>",
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --incremental && tsc -d --declarationDir dist/types/",
+    "build:watch": "tsc --watch",
+    "format": "prettier --write \"{*,lib/**/*}.+(md|js|ts|json)\"",
+    "lint": "tsc --noEmit",
+    "test": "jest"
+  },
+  "prettier": {
+    "bracketSpacing": true,
+    "printWidth": 80,
+    "proseWrap": "always",
+    "singleQuote": true,
+    "tabWidth": 4,
+    "trailingComma": "all",
+    "useTabs": true,
+    "overrides": [
+      {
+        "files": [
+          "package.json"
+        ],
+        "options": {
+          "printWidth": 999,
+          "tabWidth": 2,
+          "useTabs": false
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "@rollup/pluginutils": "^3.0.9",
+    "rollup": "^2.7.6",
+    "treat": "^1.4.1",
+    "debug": "^4.1.1",
+    "eval": "^0.1.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "tsconfig.test.json"
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "@types/node": "^13.13.4",
+    "jest": "^25.2.4",
+    "prettier": "^2.0.2",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^25.4.0",
+    "typescript": "^3.8.3"
+  },
+  "volta": {
+    "node": "14.1.0",
+    "yarn": "1.22.4"
+  }
+}
