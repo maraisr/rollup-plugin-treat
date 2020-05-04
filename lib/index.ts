@@ -101,7 +101,7 @@ export const rollupPluginTreat = (passedOptions: Partial<Options>): Plugin => {
 			};
 		},
 
-		async generateBundle(outputOptions, bundle) {
+		async generateBundle(_outputOptions, _bundle) {
 			if (options.outputCSS) {
 				let output = '';
 				const modules = [...this.moduleIds].map((m) =>
