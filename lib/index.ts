@@ -1,23 +1,16 @@
-import type { OutputChunk, Plugin, PluginContext } from 'rollup';
-import { rollup } from 'rollup';
-import type { FilterPattern } from '@rollup/pluginutils';
-import { createFilter, dataToEsm } from '@rollup/pluginutils';
 import crypto from 'crypto';
 import path from 'path';
+import type { FilterPattern } from '@rollup/pluginutils';
+import { createFilter, dataToEsm } from '@rollup/pluginutils';
+import type { Plugin } from 'rollup';
 import type { WebpackTreat as TreatStoreInterface } from 'treat/lib/types/types';
-import { TreatTheme } from 'treat/lib/types/types';
+import { childCompile, d } from './util';
+import type { StoreType, StyleItem } from './store';
+import { store, STYLE_TYPE } from './store';
 import processCss from 'treat/webpack-plugin/processCss';
 import eval from 'eval';
 
-import debugLib from 'debug';
-import { ThemeOrAny } from 'treat/theme';
-
-const debug = debugLib('rollupPluginTreat');
-
-const THEMED = Symbol('themed treat style');
-const LOCAL = Symbol('local treat style');
-
-const treatStoreCache = new WeakMap<PluginContext, TreatStore>(); // TODO: Type me
+const { version } = require('../package.json');
 
 interface FilterOptions {
 	include?: FilterPattern;
@@ -25,24 +18,35 @@ interface FilterOptions {
 }
 
 interface Options extends FilterOptions {
-	localIdentName?: string;
-	themeIdentName?: (() => string) | string;
-	outputCSS?: boolean;
+	localIdentName: string;
+	themeIdentName: (() => string) | string;
+	outputCSS: boolean | string;
+
+	onCSSOutput(source: string): Promise<string> | string;
+
+	minify: boolean;
+	browsers: Array<string>;
 }
 
-const isWatchMode = process.env.ROLLUP_WATCH !== 'true'; // TODO: Confirm this is how we check?
+const isProduction =
+	process.env.NODE_ENV === 'production' ||
+	process.env.BUILD === 'production' ||
+	process.env.ROLLUP_WATCH !== 'true';
 
-const defaultOptions = (options: Partial<Options>): Required<Options> => {
+const defaultOptions = (options: Partial<Options>): Options => {
 	const {
 		exclude = null,
 		outputCSS = true,
 		include = /\.treat\.(ts|js)$/,
-		localIdentName = isWatchMode
+		localIdentName = isProduction
 			? '[name]-[local]_[hash:base64:5]'
 			: '[hash:base64:5]',
-		themeIdentName = isWatchMode
+		themeIdentName = isProduction
 			? '_[name]-[local]_[hash:base64:4]'
 			: '[hash:base64:4]',
+		minify = isProduction,
+		browsers = [],
+		onCSSOutput = (source) => source,
 	} = options;
 
 	return {
@@ -51,136 +55,166 @@ const defaultOptions = (options: Partial<Options>): Required<Options> => {
 		themeIdentName,
 		include,
 		outputCSS,
+		onCSSOutput,
+		minify,
+		browsers,
 	};
 };
 
-export const rollupPluginTreat = (passedOptions: Options): Plugin => {
+export const rollupPluginTreat = (passedOptions: Partial<Options>): Plugin => {
 	const options = defaultOptions(passedOptions);
 	const shouldProcessAsTreat = createFilter(options.include, options.exclude);
 
-	return {
-		name: 'rollupPluginTreat',
+	d('version %s', version);
+	d('environment %s', isProduction ? 'production' : 'development');
 
-		async transform(code: string, id) {
+	const treatStore = store();
+
+	return {
+		name: 'TreatPlugin',
+
+		async transform(_code: string, id) {
 			if (!shouldProcessAsTreat(id)) return null;
 
 			if (this.cache.has(id)) return this.cache.get(id);
 
-			const sourceCompiled = await childCompile(id);
+			const compiledTreatFile = await childCompile(id);
 
-			let __treat_store__ = treatStoreCache.get(this);
+			d('compiled treat file %s', id);
 
-			if (!__treat_store__) {
-				__treat_store__ = new TreatStore(options, code, id);
-				treatStoreCache.set(this, __treat_store__);
-			}
+			const styleRefs = processTreatFile(compiledTreatFile.code, {
+				id,
+				options,
+				store: treatStore,
+			});
 
-			let result;
-			try {
-				result = eval(
-					`
-					require('treat/lib/commonjs/webpackTreat').setWebpackTreat(__treat_store__);
-					${sourceCompiled.code}
-				`,
-					id,
-					{
-						console,
-						__treat_store__,
-					},
-					true,
-				);
-			} catch (e) {
-				throw e;
-			}
-
-			if (options.outputCSS) {
-				const cssValue = await processCss(
-					{
-						'.test': {
-							color: 'red',
-						},
-					},
-					{
-						browsers: [],
-						minify: false,
-						from: id,
-					},
-				);
-
-				this.emitFile({
-					type: 'asset',
-					source: cssValue,
-				});
-			}
-
-			return dataToEsm(result, {
+			const code = dataToEsm(styleRefs, {
 				namedExports: true,
 				preferConst: true,
 			});
+
+			return {
+				code,
+				moduleSideEffects: false,
+				syntheticNamedExports: false,
+				map: { mappings: '' },
+			};
+		},
+
+		async generateBundle(outputOptions, bundle) {
+			if (options.outputCSS) {
+				let output = '';
+				const modules = [...this.moduleIds].map((m) =>
+					this.getModuleInfo(m),
+				);
+
+				for (const module of modules) {
+					const maybeResource = treatStore.getStyleResource(
+						module.id,
+					);
+
+					if (maybeResource) {
+						const one_object = maybeResource.reduce(
+							(result, item) => {
+								return {
+									...result,
+									...item.styles,
+								};
+							},
+							{},
+						);
+
+						const css =
+							(await processCss(one_object, {
+								browsers: options.browsers,
+								minify: options.minify,
+								from: module.id,
+							})) ?? '';
+
+						output += css;
+					}
+				}
+
+				const passedCss = await options.onCSSOutput(output);
+
+				this.emitFile({
+					type: 'asset',
+					source: passedCss,
+					fileName:
+						typeof options.outputCSS === 'string'
+							? options.outputCSS
+							: undefined,
+				});
+			}
 		},
 	};
 };
 
-const childCompile = async (id: string): Promise<OutputChunk> => {
-	const fileBundle = await rollup({
-		input: id,
-	});
+const processTreatFile = (
+	sourceCode: string,
+	context: { id: string; options: Options; store: StoreType },
+) => {
+	const trackingStyles = new Set<StyleItem>();
 
-	const { output } = await fileBundle.generate({
-		format: 'cjs',
-	});
+	const __treat_store__: TreatStoreInterface = {
+		addTheme(theme) {
+			context.store.addTheme(theme);
+		},
+		getThemes: () => context.store.getThemes(),
 
-	if (output.length > 1)
-		throw new Error(
-			"Didnt expect child compiler to produce more than 1 file. Perhaps you're using async imports?",
+		addLocalCss(styles) {
+			trackingStyles.add({
+				type: STYLE_TYPE.LOCAL,
+				styles,
+			});
+		},
+		addThemedCss(themeRef, styles) {
+			trackingStyles.add({
+				type: STYLE_TYPE.THEME,
+				themeRef,
+				styles,
+			});
+		},
+
+		getIdentName(localName, scopeId, theme) {
+			return typeof theme === 'undefined'
+				? processIdent(context.options.localIdentName, context.id)(
+						localName,
+						scopeId,
+						theme,
+				  )
+				: processIdent(context.options.themeIdentName, context.id)(
+						localName,
+						scopeId,
+						theme,
+				  );
+		},
+	};
+
+	let result;
+	try {
+		result = eval(
+			`
+					require('treat/lib/commonjs/webpackTreat').setWebpackTreat(__treat_store__);
+					${sourceCode}
+				`,
+			context.id,
+			{
+				console,
+				__treat_store__,
+			},
+			true,
 		);
+	} catch (e) {
+		throw e;
+	}
+	context.store.addStyleResource(context.id, trackingStyles);
 
-	return output[0];
+	return result;
 };
 
-class TreatStore implements TreatStoreInterface {
-	constructor(
-		private options: ReturnType<typeof defaultOptions>,
-		private sourceCode: string,
-		private id: string,
-	) {}
-
-	themeIdentFn = processIdent(
-		this.options.themeIdentName,
-		this.sourceCode,
-		this.id,
-	);
-	localIdentFn = processIdent(
-		this.options.localIdentName,
-		this.sourceCode,
-		this.id,
-	);
-
-	themes: Array<TreatTheme<ThemeOrAny>> = [];
-
-	styles = new Set();
-
-	addLocalCss(css) {}
-
-	addThemedCss(themeRef, css) {}
-
-	getIdentName(local, scopeId, theme) {
-		return theme !== undefined
-			? this.themeIdentFn(local, scopeId, theme)
-			: this.localIdentFn(local, scopeId);
-	}
-
-	addTheme(theme) {
-		this.themes.push(theme);
-	}
-
-	getThemes() {
-		return this.themes;
-	}
-}
-
-const processIdent = (identFn, sourceCode: string, id: string) => {
-	return (localName: string, scopeId: string, theme?: string): string => {
+const processIdent = (identFn, id: string) => {
+	return (localName: string, scopeId: number, theme?: string): string => {
 		const identName =
 			typeof identFn === 'function' ? identFn(theme) : identFn;
 
@@ -190,7 +224,7 @@ const processIdent = (identFn, sourceCode: string, id: string) => {
 				(_all, hashType = 'md5', digestType, maxLength = 10) =>
 					crypto
 						.createHash(hashType)
-						.update(`${sourceCode}${scopeId}`)
+						.update(`${id}${scopeId}`)
 						.digest(digestType)
 						.slice(0, maxLength),
 			)

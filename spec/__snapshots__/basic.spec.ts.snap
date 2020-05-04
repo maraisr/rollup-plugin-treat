@@ -1,45 +1,41 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`it should snapshot match basic-no-theme: assets/asset-7d28192b 1`] = `
-".test {
-    color: red
-}"
-`;
+exports[`it should snapshot match async-modules: a 1`] = `
+"import { resolveStyles } from 'treat';
 
-exports[`it should snapshot match basic-no-theme: main 1`] = `
-"'use strict';
-
-var treat = require('treat');
-
-const myClass = \\"main-style_Cgpzz\\";
-var main_treat = {
-	myClass: myClass
+const a = \\"a-style_hnUgi\\";
+var a_treat = {
+	a: a
 };
 
 var styleRefs = /*#__PURE__*/Object.freeze({
 	__proto__: null,
-	myClass: myClass,
-	'default': main_treat
+	a: a,
+	'default': a_treat
 });
 
 console.log(
-	treat.resolveStyles(null, styleRefs),
+	resolveStyles(null, styleRefs),
 );
 "
 `;
 
-exports[`it should snapshot match basic-with-theme: assets/asset-7d28192b 1`] = `
-".test {
-    color: red
-}"
+exports[`it should snapshot match async-modules: bundle.css 1`] = `".a-style_hnUgi{color:red}"`;
+
+exports[`it should snapshot match async-modules: main 1`] = `
+"import('./a-4eec1be4.js')
+	.then(() => {
+
+	});
+"
 `;
 
-exports[`it should snapshot match basic-with-theme: main 1`] = `
-"'use strict';
+exports[`it should snapshot match basic-no-theme: bundle.css 1`] = `".main-style_OsUq7{color:red}"`;
 
-var treat = require('treat');
+exports[`it should snapshot match basic-no-theme: main 1`] = `
+"import { resolveStyles } from 'treat';
 
-const myClass = \\"$main-style_uD4-m\\";
+const myClass = \\"main-style_OsUq7\\";
 var main_treat = {
 	myClass: myClass
 };
@@ -50,10 +46,94 @@ var styleRefs = /*#__PURE__*/Object.freeze({
 	'default': main_treat
 });
 
-const myTheme = \\"_theme-theme_H6C7\\";
+console.log(
+	resolveStyles(null, styleRefs),
+);
+"
+`;
+
+exports[`it should snapshot match basic-with-theme: bundle.css 1`] = `".main-style_fzVq4{color:pink}.main-style_wvq38_theme-theme_hBG0{color:red}"`;
+
+exports[`it should snapshot match basic-with-theme: main 1`] = `
+"import { resolveStyles } from 'treat';
+
+const myTheme = \\"_theme-theme_hBG0\\";
+
+const plainClass = \\"main-style_fzVq4\\";
+const themedClass = \\"$main-style_wvq38\\";
+var main_treat = {
+	plainClass: plainClass,
+	themedClass: themedClass
+};
+
+var styleRefs = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	plainClass: plainClass,
+	themedClass: themedClass,
+	'default': main_treat
+});
 
 console.log(
-	treat.resolveStyles(myTheme, styleRefs),
+	resolveStyles(myTheme, styleRefs),
+);
+"
+`;
+
+exports[`it should snapshot match module-order: bundle.css 1`] = `".a-style_M-kUM{color:red}.b-style_n3t8V{color:#00f}"`;
+
+exports[`it should snapshot match module-order: main 1`] = `
+"import { resolveStyles } from 'treat';
+
+const a = \\"a-style_M-kUM\\";
+var a_treat = {
+	a: a
+};
+
+var styleRefs = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	a: a,
+	'default': a_treat
+});
+
+const b = \\"b-style_n3t8V\\";
+var b_treat = {
+	b: b
+};
+
+var styleRefs$1 = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	b: b,
+	'default': b_treat
+});
+
+console.log(
+	resolveStyles(null, styleRefs$1),
+);
+
+console.log(
+	resolveStyles(null, styleRefs),
+);
+"
+`;
+
+exports[`it should snapshot match using-node-modules: bundle.css 1`] = `".main-style_K8-5m{color:rgba(255,205,100,.7)}"`;
+
+exports[`it should snapshot match using-node-modules: main 1`] = `
+"import { resolveStyles } from 'treat';
+
+const myClass = \\"main-style_K8-5m\\";
+var main_treat = {
+	myClass: myClass
+};
+
+var styleRefs = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	myClass: myClass,
+	'default': main_treat
+});
+
+console.log(
+	resolveStyles(null, styleRefs),
 );
 "
 `;

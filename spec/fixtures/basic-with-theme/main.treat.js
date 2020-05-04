@@ -1,5 +1,9 @@
 import { style } from 'treat';
 
-export const myClass = style(theme => ({
+export const themedClass = style(theme => ({
 	color: theme.myColourToken,
 }));
+
+export const plainClass = style({
+	color: 'pink',
+});
