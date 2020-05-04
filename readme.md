@@ -39,5 +39,11 @@ export default {
 | minify: boolean;                             | isProduction                        |
 | browsers: Array<string>;                     | []                                  |
 
+## Outstanding
+
+- [ ] unused treat modules
+- [ ] allow for code-split generated css
+- [ ] ... stuff as I start using it
+
 [rollup]: https://github.com/rollup/rollup
 [treat]: https://github.com/seek-oss/treat
