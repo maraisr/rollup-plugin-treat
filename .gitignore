@@ -1,19 +1,18 @@
-# Editors
-.vscode/
-.idea/
-/*.iml
-
-# Git things
-
-# Node things
-node_modules/
-*.log*
-
-# Build things
-dist/
-coverage/
-.eslintcache
-*.tsbuildinfo
-
-# OS
+node_modules
 .DS_Store
+*-lock.*
+*.lock
+*.log
+
+/dist
+/types
+/coverage
+
+# Yarn
+.yarn/
+/.pnp*
+
+# Editors
+*.iml
+/.idea
+/.vscode

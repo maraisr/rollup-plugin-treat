@@ -1,21 +1,14 @@
 {
+	"extends": "@marais/tsconfig",
 	"compilerOptions": {
-		"target": "ES2018",
-		"module": "commonjs",
+		"target": "ES2019",
+		"module": "CommonJS",
+		"declaration": true,
+		"declarationDir": "types",
 		"lib": ["ESNext"],
-		"outDir": "dist/",
-		"strict": true,
-		"strictNullChecks": true,
-		"strictFunctionTypes": true,
-		"alwaysStrict": true,
-		"noImplicitAny": false,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noImplicitReturns": true,
-		"noFallthroughCasesInSwitch": true,
-		"moduleResolution": "node",
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true
+		"outDir": "./dist",
+		"noImplicitAny": false
 	},
-	"include": ["lib/**/*.ts"]
+	"include": ["lib/**/*"],
+	"exclude": ["node_modules"]
 }

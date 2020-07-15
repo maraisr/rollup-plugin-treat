@@ -41,9 +41,9 @@ export default {
 
 ## Outstanding
 
-- [ ] unused treat modules
-- [ ] allow for code-split generated css
-- [ ] ... stuff as I start using it
+-   [ ] unused treat modules
+-   [ ] allow for code-split generated css
+-   [ ] ... stuff as I start using it
 
 [rollup]: https://github.com/rollup/rollup
 [treat]: https://github.com/seek-oss/treat

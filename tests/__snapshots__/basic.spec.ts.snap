@@ -3,7 +3,7 @@
 exports[`it should snapshot match async-modules: a 1`] = `
 "import { resolveStyles } from 'treat';
 
-const a = \\"a-style_it39M\\";
+const a = \\"a-style_EB8aX\\";
 var a_treat = {
 	a: a
 };
@@ -20,22 +20,22 @@ console.log(
 "
 `;
 
-exports[`it should snapshot match async-modules: bundle.css 1`] = `".a-style_it39M{color:red}"`;
+exports[`it should snapshot match async-modules: bundle.css 1`] = `".a-style_EB8aX{color:red}"`;
 
 exports[`it should snapshot match async-modules: main 1`] = `
-"import('./a-260cab48.js')
+"import('./a-397bd8b2.js')
 	.then(() => {
 
 	});
 "
 `;
 
-exports[`it should snapshot match basic-no-theme: bundle.css 1`] = `".main-style_Fu8tQ{color:red}"`;
+exports[`it should snapshot match basic-no-theme: bundle.css 1`] = `".main-style_-O-a2{color:red}"`;
 
 exports[`it should snapshot match basic-no-theme: main 1`] = `
 "import { resolveStyles } from 'treat';
 
-const myClass = \\"main-style_Fu8tQ\\";
+const myClass = \\"main-style_-O-a2\\";
 var main_treat = {
 	myClass: myClass
 };
@@ -52,15 +52,15 @@ console.log(
 "
 `;
 
-exports[`it should snapshot match basic-with-theme: bundle.css 1`] = `".main-style_OV41M{color:pink}.main-style_YY6f7_theme-theme_0PW-{color:red}"`;
+exports[`it should snapshot match basic-with-theme: bundle.css 1`] = `".main-style_YnB3c{color:pink}.main-style_4mkE9_theme-theme_hdkV{color:red}"`;
 
 exports[`it should snapshot match basic-with-theme: main 1`] = `
 "import { resolveStyles } from 'treat';
 
-const myTheme = \\"_theme-theme_0PW-\\";
+const myTheme = \\"_theme-theme_hdkV\\";
 
-const plainClass = \\"main-style_OV41M\\";
-const themedClass = \\"$main-style_YY6f7\\";
+const plainClass = \\"main-style_YnB3c\\";
+const themedClass = \\"$main-style_4mkE9\\";
 var main_treat = {
 	plainClass: plainClass,
 	themedClass: themedClass
@@ -79,12 +79,12 @@ console.log(
 "
 `;
 
-exports[`it should snapshot match module-order: bundle.css 1`] = `".a-style_nQ6Ww{color:red}.b-style_whwTf{color:#00f}"`;
+exports[`it should snapshot match module-order: bundle.css 1`] = `".a-style_e7kHH{color:red}.b-style_GDtJa{color:#00f}"`;
 
 exports[`it should snapshot match module-order: main 1`] = `
 "import { resolveStyles } from 'treat';
 
-const a = \\"a-style_nQ6Ww\\";
+const a = \\"a-style_e7kHH\\";
 var a_treat = {
 	a: a
 };
@@ -95,7 +95,7 @@ var styleRefs = /*#__PURE__*/Object.freeze({
 	'default': a_treat
 });
 
-const b = \\"b-style_whwTf\\";
+const b = \\"b-style_GDtJa\\";
 var b_treat = {
 	b: b
 };
@@ -116,12 +116,12 @@ console.log(
 "
 `;
 
-exports[`it should snapshot match using-node-modules: bundle.css 1`] = `".main-style_m19MR{color:rgba(255,205,100,.7)}"`;
+exports[`it should snapshot match using-node-modules: bundle.css 1`] = `".main-style_nzFr5{color:rgba(255,205,100,.7)}"`;
 
 exports[`it should snapshot match using-node-modules: main 1`] = `
 "import { resolveStyles } from 'treat';
 
-const myClass = \\"main-style_m19MR\\";
+const myClass = \\"main-style_nzFr5\\";
 var main_treat = {
 	myClass: myClass
 };
