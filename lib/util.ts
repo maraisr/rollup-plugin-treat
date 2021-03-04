@@ -3,9 +3,9 @@ import { rollup } from 'rollup';
 import resolve from '@rollup/plugin-node-resolve';
 import builtins from 'builtin-modules';
 
-import debug from 'debug';
+import { diary } from 'diary';
 
-export const d = debug('rollup-plugin-treat');
+export const d = diary('rollup-plugin-treat').debug;
 
 export const childCompile = async (id: string): Promise<OutputChunk> => {
 	const fileBundle = await rollup({
@@ -22,6 +22,8 @@ export const childCompile = async (id: string): Promise<OutputChunk> => {
 		throw new Error(
 			"Didnt expect child compiler to produce more than 1 file. Perhaps you're using async imports?",
 		);
+
+	d('compiled treat file %s', id);
 
 	return output[0];
 };

@@ -1,14 +1,12 @@
-import crypto from 'crypto';
-import path from 'path';
 import type { FilterPattern } from '@rollup/pluginutils';
 import { createFilter, dataToEsm } from '@rollup/pluginutils';
+import crypto from 'crypto';
+import eval from 'eval';
+import path from 'path';
 import type { Plugin } from 'rollup';
-import type { WebpackTreat as TreatStoreInterface } from 'treat/lib/types/types';
-import { childCompile, d } from './util';
 import type { StoreType, StyleItem } from './store';
 import { store, STYLE_TYPE } from './store';
-import processCss from 'treat/webpack-plugin/processCss';
-import eval from 'eval';
+import { childCompile, d } from './util';
 
 const { version } = require('../package.json');
 
@@ -21,27 +19,23 @@ interface Options extends FilterOptions {
 	localIdentName: string;
 	themeIdentName: (() => string) | string;
 	outputCSS: boolean | string;
-
-	onCSSOutput(source: string): Promise<string> | string;
-
 	minify: boolean;
 	browsers: Array<string>;
+
+	onCSSOutput(source: string): Promise<string> | string;
 }
 
-const isProduction =
-	process.env.NODE_ENV === 'production' ||
-	process.env.BUILD === 'production' ||
-	process.env.ROLLUP_WATCH !== 'true';
+const isProduction = !process.env.ROLLUP_WATCH;
 
 const defaultOptions = (options: Partial<Options>): Options => {
 	const {
 		exclude = null,
 		outputCSS = true,
 		include = /\.treat\.(ts|js)$/,
-		localIdentName = isProduction
+		localIdentName = !isProduction
 			? '[name]-[local]_[hash:base64:5]'
 			: '[hash:base64:5]',
-		themeIdentName = isProduction
+		themeIdentName = !isProduction
 			? '_[name]-[local]_[hash:base64:4]'
 			: '[hash:base64:4]',
 		minify = isProduction,
@@ -80,8 +74,6 @@ export const rollupPluginTreat = (passedOptions: Partial<Options>): Plugin => {
 
 			const compiledTreatFile = await childCompile(id);
 
-			d('compiled treat file %s', id);
-
 			const styleRefs = processTreatFile(compiledTreatFile.code, {
 				id,
 				options,
@@ -95,7 +87,7 @@ export const rollupPluginTreat = (passedOptions: Partial<Options>): Plugin => {
 
 			return {
 				code,
-				moduleSideEffects: false,
+				moduleSideEffects: true,
 				syntheticNamedExports: false,
 				map: { mappings: '' },
 			};
@@ -156,7 +148,7 @@ const processTreatFile = (
 ) => {
 	const trackingStyles = new Set<StyleItem>();
 
-	const __treat_store__: TreatStoreInterface = {
+	const __store__ = {
 		addTheme(theme) {
 			context.store.addTheme(theme);
 		},
@@ -179,30 +171,23 @@ const processTreatFile = (
 		getIdentName(localName, scopeId, theme) {
 			return typeof theme === 'undefined'
 				? processIdent(context.options.localIdentName, context.id)(
-						localName,
-						scopeId,
-						theme,
-				  )
+					localName,
+					scopeId,
+					theme,
+				)
 				: processIdent(context.options.themeIdentName, context.id)(
-						localName,
-						scopeId,
-						theme,
-				  );
+					localName,
+					scopeId,
+					theme,
+				);
 		},
 	};
 
 	let result;
 	try {
-		result = eval(
-			`
-					require('treat/lib/commonjs/webpackTreat').setWebpackTreat(__treat_store__);
-					${sourceCode}
-				`,
+		result = eval(`require('treat/adapter').setAdapter(__store__);\n${sourceCode}`,
 			context.id,
-			{
-				console,
-				__treat_store__,
-			},
+			{ console, __store__ },
 			true,
 		);
 	} catch (e) {
@@ -213,7 +198,7 @@ const processTreatFile = (
 	return result;
 };
 
-const processIdent = (identFn, id: string) => {
+const processIdent = (identFn: ((theme: string) => string) | string, id: string) => {
 	return (localName: string, scopeId: number, theme?: string): string => {
 		const identName =
 			typeof identFn === 'function' ? identFn(theme) : identFn;
