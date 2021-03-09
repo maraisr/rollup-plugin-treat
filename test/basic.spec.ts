@@ -24,7 +24,7 @@ test.before(() => {
 });
 
 fixtureInputs.forEach(testFolder => {
-	if (!/module-order/.test(testFolder)) return;
+	if (!/multiple-themes/.test(testFolder)) return;
 
 	test(`should output css for ${testFolder}`, async () => {
 		const bundle = await build(
@@ -40,6 +40,7 @@ fixtureInputs.forEach(testFolder => {
 		});
 
 		output.forEach((item) => {
+			debugger;
 			if (item.type === 'chunk') {
 
 			} else if (item.type === 'asset') {

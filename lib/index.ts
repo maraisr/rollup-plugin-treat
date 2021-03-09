@@ -3,10 +3,13 @@ import { createFilter, dataToEsm } from '@rollup/pluginutils';
 import crypto from 'crypto';
 import eval from 'eval';
 import path from 'path';
+import { TransformResult } from 'rollup';
 import type { Plugin } from 'rollup';
+import { Adapter } from 'treat/dist/declarations/src/types';
 import type { StoreType, StyleItem } from './store';
 import { store, STYLE_TYPE } from './store';
 import { childCompile, d } from './util';
+import {walk} from 'astray';
 
 const { version } = require('../package.json');
 
@@ -56,88 +59,96 @@ const defaultOptions = (options: Partial<Options>): Options => {
 };
 
 export const rollupPluginTreat = (passedOptions: Partial<Options>): Plugin => {
-	const options = defaultOptions(passedOptions);
-	const shouldProcessAsTreat = createFilter(options.include, options.exclude);
-
 	d('version %s', version);
 	d('environment %s', isProduction ? 'production' : 'development');
 
+	const options = defaultOptions(passedOptions);
+	const shouldProcessAsTreat = createFilter(options.include, options.exclude);
+
 	const treatStore = store();
+
+	const treats = new Map,
+		parents = new Map;
 
 	return {
 		name: 'TreatPlugin',
 
+		async resolveId( importee, importer) {
+			// TODO: Use shouldProcessAsTreat here
+			if (/\.treat/.test(importee)) {
+				let entry = parents.get(importer) || { ref: null, order: new Set };
+				let absolute = await this.resolve(importee, importer, {skipSelf: true});
+				if (absolute) entry.order.add(absolute);
+				parents.set(importer, entry);
+				debugger;
+			}
+
+			return null;
+		},
+
 		async transform(_code: string, id) {
-			if (!shouldProcessAsTreat(id)) return null;
+			if (shouldProcessAsTreat(id)) {
 
-			if (this.cache.has(id)) return this.cache.get(id);
+			}
 
-			const compiledTreatFile = await childCompile(id);
-
-			const styleRefs = processTreatFile(compiledTreatFile.code, {
-				id,
-				options,
-				store: treatStore,
-			});
-
-			const code = dataToEsm(styleRefs, {
-				namedExports: true,
-				preferConst: true,
-			});
-
-			return {
-				code,
-				moduleSideEffects: true,
-				syntheticNamedExports: false,
-				map: { mappings: '' },
-			};
+			const entry = parents.get(id);
+			debugger;
 		},
 
 		async generateBundle(_outputOptions, _bundle) {
-			if (options.outputCSS) {
-				let output = '';
-				const modules = [...this.moduleIds].map((m) =>
-					this.getModuleInfo(m),
+			if (!options.outputCSS) return;
+
+			let output = '';
+
+			for await (const moduleId of this.getModuleIds()) {
+				const maybeResource = treatStore.getStyleResource(
+					moduleId
+				);
+				debugger;
+			}
+			/*const modules = this.getModuleIds().map((m) =>
+				this.getModuleInfo(m),
+			);*/
+
+			debugger;
+
+			/*for (const module of modules) {
+				const maybeResource = treatStore.getStyleResource(
+					module.id,
 				);
 
-				for (const module of modules) {
-					const maybeResource = treatStore.getStyleResource(
-						module.id,
+				if (maybeResource) {
+					const one_object = maybeResource.reduce(
+						(result, item) => {
+							return {
+								...result,
+								...item.styles,
+							};
+						},
+						{},
 					);
 
-					if (maybeResource) {
-						const one_object = maybeResource.reduce(
-							(result, item) => {
-								return {
-									...result,
-									...item.styles,
-								};
-							},
-							{},
-						);
+					const css =
+						(await processCss(one_object, {
+							browsers: options.browsers,
+							minify: options.minify,
+							from: module.id,
+						})) ?? '';
 
-						const css =
-							(await processCss(one_object, {
-								browsers: options.browsers,
-								minify: options.minify,
-								from: module.id,
-							})) ?? '';
-
-						output += css;
-					}
+					output += css;
 				}
-
-				const passedCss = await options.onCSSOutput(output);
-
-				this.emitFile({
-					type: 'asset',
-					source: passedCss,
-					fileName:
-						typeof options.outputCSS === 'string'
-							? options.outputCSS
-							: undefined,
-				});
 			}
+
+			const passedCss = await options.onCSSOutput(output);
+
+			this.emitFile({
+				type: 'asset',
+				source: passedCss,
+				fileName:
+					typeof options.outputCSS === 'string'
+						? options.outputCSS
+						: undefined,
+			});*/
 		},
 	};
 };
@@ -148,10 +159,11 @@ const processTreatFile = (
 ) => {
 	const trackingStyles = new Set<StyleItem>();
 
-	const __store__ = {
+	const __store__:Adapter = {
 		addTheme(theme) {
 			context.store.addTheme(theme);
 		},
+
 		getThemes: () => context.store.getThemes(),
 
 		addLocalCss(styles) {
@@ -193,6 +205,7 @@ const processTreatFile = (
 	} catch (e) {
 		throw e;
 	}
+	debugger;
 	context.store.addStyleResource(context.id, trackingStyles);
 
 	return result;
